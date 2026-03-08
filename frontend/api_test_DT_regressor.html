@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Decision Tree Regressor - Predict Percentage Profit per Unit</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; max-width: 500px; }
+        input, select { width: 100%; padding: 8px; margin: 8px 0; box-sizing: border-box; }
+        button { padding: 10px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer; margin-top: 10px; }
+        #result { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Predict Percentage Profit per Unit using a Decision Tree Regressor</h2>
+    <form id="predictForm">
+        <label for="PaymentDate">Payment Date:</label>
+        <input type="date" id="PaymentDate" name="PaymentDate" required>
+
+        <label for="CustomerType">Customer Type:</label>
+        <select id="CustomerType" name="CustomerType" required>
+            <option value="Business">Business</option>
+            <option value="Individual">Individual</option>
+        </select>
+
+        <label for="BranchSubCounty">Branch Sub-County:</label>
+        <input type="text" id="BranchSubCounty" name="BranchSubCounty" required>
+
+        <label for="ProductCategoryName">Product Category Name:</label>
+        <input type="text" id="ProductCategoryName" name="ProductCategoryName" required>
+
+        <label for="QuantityOrdered">Quantity Ordered:</label>
+        <input type="number" id="QuantityOrdered" name="QuantityOrdered" min="1" required>
+
+        <button type="submit">Predict</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('predictForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = {
+                PaymentDate: document.getElementById('PaymentDate').value,
+                CustomerType: document.getElementById('CustomerType').value,
+                BranchSubCounty: document.getElementById('BranchSubCounty').value,
+                ProductCategoryName: document.getElementById('ProductCategoryName').value,
+                QuantityOrdered: parseInt(document.getElementById('QuantityOrdered').value)
+            };
+            
+            fetch('http://127.0.0.1:5000/api/v1/models/decision-tree-regressor/predictions', {
+            // fetch('https://127.0.0.1:443/api/v1/models/decision-tree-regressor/predictions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById('result').textContent =
+                    'Predicted Percentage Profit per Unit: ' + result['Predicted Percentage Profit per Unit = '];
+            })
+            .catch(error => {
+                document.getElementById('result').textContent = 'Error: ' + error;
+            });
+        });
+    </script>
+</body>
+</html>

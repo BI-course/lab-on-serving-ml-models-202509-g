@@ -1,0 +1,96 @@
+<html>
+<head>
+    <title>Serving ML Models</title>
+</head>
+<body>
+    <h1>Serving Machine Learning Models through a RESTish API using Flask in Python</h1>
+    <table style="border-collapse: collapse; width: 60%;">
+        <tr>
+            <th style="border-bottom: 2px solid #000;"><strong>Key</strong></th>
+            <th style="border-bottom: 2px solid #000;"><strong>Value</strong></th>
+        </tr>
+        <tr><td colspan="2"><hr style="margin:0;"></td></tr>
+        <tr>
+            <td><strong>Course Codes</strong></td>
+            <td>BBT 4206</td>
+        </tr>
+        <tr><td colspan="2"><hr style="margin:0;"></td></tr>
+        <tr>
+            <td><strong>Course Names</strong></td>
+            <td>BBT 4206: Business Intelligence II (Week 4-6 of 13)</td>
+        </tr>
+        <tr><td colspan="2"><hr style="margin:0;"></td></tr>
+        <tr>
+            <td><strong>Semester</strong></td>
+            <td>January to April 2026</td>
+        </tr>
+        <tr><td colspan="2"><hr style="margin:0;"></td></tr>
+        <tr>
+            <td><strong>Lecturer</strong></td>
+            <td>Allan Omondi</td>
+        </tr>
+        <tr><td colspan="2"><hr style="margin:0;"></td></tr>
+        <tr>
+            <td><strong>Contact</strong></td>
+            <td>aomondi@strathmore.edu</td>
+        </tr>
+        <tr><td colspan="2"><hr style="margin:0;"></td></tr>
+        <tr>
+            <td><strong>Note</strong></td>
+            <td>
+                The lecture contains both theory and practice.<br>
+                This forms part of the practice.<br>
+                It is intended for educational purposes only.<br>
+                Recommended citation: <a href="https://raw.githubusercontent.com/course-files/ServingMLModels/refs/heads/main/RecommendedCitation.bib">BibTex</a>
+            </td>
+        </tr>
+        <tr><td colspan="2"><hr style="margin:0;"></td></tr>
+    </table>
+
+    <h2>Request Flow</h2>
+    <img src="RequestFlow.jpg" alt="Request Flow Diagram" style="display:block; background:#fff; padding:16px; border:1px solid #ccc; max-width:60%; margin-bottom:24px;">
+    <ol style="line-height:1.7;">
+        <li>
+            <strong>Client</strong> (Postman / cURL / frontend: web, mobile, desktop)<br>
+            <ul>
+                <li>Sends a request to <code>https://yourdomain/api/...</code></li>
+            </ul>
+        </li>
+        <li>
+            <strong>NGINX</strong> (reverse proxy)
+            <ul>
+                <li>Terminates HTTPS (handles SSL/TLS).</li>
+                <li>Serves static files if needed.</li>
+                <li>For <code>/api/...</code>, forwards the request internally to Gunicorn.</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Gunicorn</strong> (Web Server Gateway Interface (WSGI) server)
+            <ul>
+                <li>Accepts HTTP requests from NGINX.</li>
+                <li>Manages multiple worker processes/threads.</li>
+                <li>Translates the raw HTTP into Python WSGI calls.</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Flask</strong> (WSGI app)
+            <ul>
+                <li>Your actual Python application logic.</li>
+                <li>Routes the request to the correct endpoint (<code>@app.route</code>).</li>
+                <li>Returns a response.</li>
+            </ul>
+        </li>
+    </ol>
+    <p style="margin-left:2em;">
+        <strong>Response returned back up:</strong><br>
+        Flask &rarr; Gunicorn &rarr; NGINX &rarr; Client
+    </p>
+
+    <h2>List of API Endpoints</h2>
+
+    <ul>
+        <li>Decision Tree Classifier API endpoint (POST): <strong>/api/predict_decision_tree_classifier</strong> - sample HTML page: <a href="api_test_DT_classifier.html" target="_blank">api_test_DT_classifier.html</a></li>
+        <li>Decision Tree Regressor API endpoint (POST): <strong>/api/predict_decision_tree_regressor</strong> - sample HTML page: <a href="api_test_DT_regressor.html" target="_blank">api_test_DT_regressor.html</a></li>
+    </ul>
+</body>
+</html>
