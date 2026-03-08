@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBT 4206 - ML Model API</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ML Model Serving API</h1>
+            <p>BBT 4206 - Business Intelligence II</p>
+        </header>
+
+        <section class="card">
+            <h2>API Health Check</h2>
+            <button id="healthBtn" type="button">Check Health</button>
+            <pre id="healthResult" class="result"></pre>
+        </section>
+
+        <section class="card">
+            <h2>Model Prediction</h2>
+
+            <div class="form-group">
+                <label for="modelSelect">Select Model:</label>
+                <select id="modelSelect">
+                    <option value="decision-tree-regressor">Decision Tree Regressor</option>
+                    <option value="decision-tree-classifier">Decision Tree Classifier</option>
+                    <option value="naive-bayes">Naive Bayes Classifier</option>
+                    <option value="knn">K-Nearest Neighbors</option>
+                    <option value="svm">SVM Classifier</option>
+                    <option value="random-forest">Random Forest Classifier</option>
+                    <option value="cluster">Cluster Classifier</option>
+                </select>
+            </div>
+
+            <div id="dtcInputs" class="form-group hidden">
+                <label>Monthly Fee:</label>
+                <input type="number" id="monthly_fee" placeholder="500">
+
+                <label>Customer Age:</label>
+                <input type="number" id="customer_age" placeholder="34">
+
+                <label>Support Calls:</label>
+                <input type="number" id="support_calls" placeholder="2">
+            </div>
+
+            <div id="dtrInputs" class="form-group hidden">
+                <label>Payment Date:</label>
+                <input type="date" id="PaymentDate">
+
+                <label>Customer Type:</label>
+                <input type="text" id="CustomerType" placeholder="Business">
+
+                <label>Branch (SubCounty):</label>
+                <input type="text" id="BranchSubCounty" placeholder="Kilimani">
+
+                <label>Product Category Name:</label>
+                <input type="text" id="ProductCategoryName" placeholder="Meat-Based Dishes">
+
+                <label>Quantity Ordered:</label>
+                <input type="number" id="QuantityOrdered" placeholder="8">
+            </div>
+
+            <div id="nbInputs" class="form-group hidden">
+                <label>Administrative:</label>
+                <input type="number" id="Administrative">
+
+                <label>Administrative Duration:</label>
+                <input type="number" id="Administrative_Duration">
+
+                <label>Informational:</label>
+                <input type="number" id="Informational">
+
+                <label>Informational Duration:</label>
+                <input type="number" id="Informational_Duration">
+
+                <label>ProductRelated:</label>
+                <input type="number" id="ProductRelated">
+
+                <label>ProductRelated Duration:</label>
+                <input type="number" id="ProductRelated_Duration">
+
+                <label>BounceRates:</label>
+                <input type="number" step="any" id="BounceRates">
+
+                <label>ExitRates:</label>
+                <input type="number" step="any" id="ExitRates">
+
+                <label>PageValues:</label>
+                <input type="number" step="any" id="PageValues">
+
+                <label>SpecialDay:</label>
+                <input type="number" step="any" id="SpecialDay">
+
+                <label>Month:</label>
+                <input type="number" id="Month">
+
+                <label>OperatingSystems:</label>
+                <input type="number" id="OperatingSystems">
+
+                <label>Browser:</label>
+                <input type="number" id="Browser">
+
+                <label>Region:</label>
+                <input type="number" id="Region">
+
+                <label>TrafficType:</label>
+                <input type="number" id="TrafficType">
+
+                <label>VisitorType:</label>
+                <input type="number" id="VisitorType">
+
+                <label>Weekend (0 or 1):</label>
+                <input type="number" id="Weekend">
+            </div>
+
+            <div id="knnInputs" class="form-group hidden">
+                <label>Days for Shipping (Real):</label>
+                <input type="number" step="any" id="DaysForShippingReal">
+
+                <label>Days for Shipment (Scheduled):</label>
+                <input type="number" step="any" id="DaysForShipmentScheduled">
+
+                <label>Order Item Quantity:</label>
+                <input type="number" id="OrderItemQuantity">
+
+                <label>Sales:</label>
+                <input type="number" step="any" id="Sales">
+
+                <label>Order Profit Per Order:</label>
+                <input type="number" step="any" id="OrderProfitPerOrder">
+
+                <label>Shipping Mode:</label>
+                <select id="ShippingMode">
+                    <option value="Standard Class">Standard Class</option>
+                    <option value="First Class">First Class</option>
+                    <option value="Second Class">Second Class</option>
+                    <option value="Same Day">Same Day</option>
+                </select>
+            </div>
+
+            <div id="clusterInputs" class="form-group hidden">
+                <label>Age:</label>
+                <input type="number" step="any" id="Age" placeholder="25">
+
+                <label>Annual Income:</label>
+                <input type="number" step="any" id="Annual_Income" placeholder="50">
+
+                <label>Spending Score:</label>
+                <input type="number" step="any" id="Spending_Score" placeholder="75">
+
+                <label>Gender (Male = 1, Female = 0):</label>
+                <input type="number" id="Gender_Male" placeholder="0">
+            </div>
+
+            <button id="predictBtn" type="button">Predict</button>
+            <pre id="predictionResult" class="result"></pre>
+        </section>
+
+        <section class="card">
+            <h2>Product Recommender</h2>
+            <div class="form-group">
+                <label for="itemsInput">Enter items (comma-separated):</label>
+                <input type="text" id="itemsInput" placeholder="whole milk, yogurt, rolls/buns">
+            </div>
+            <button id="recommendBtn" type="button">Get Recommendations</button>
+            <pre id="recommendResult" class="result"></pre>
+        </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

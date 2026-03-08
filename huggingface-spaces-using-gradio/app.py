@@ -1,27 +1,32 @@
 import gradio as gr
-import joblib
 import numpy as np
+import joblib
+import os
 
-# Load trained model
-model = joblib.load("./model/decisiontree_classifier_baseline.pkl")
+MODEL_PATH = "./model/decisiontree_classifier_baseline.pkl"
 
-# Define prediction function
 def predict(monthly_fee, customer_age, support_calls):
+    # Ensure correct shape
     X = np.array([[monthly_fee, customer_age, support_calls]])
-    prediction = model.predict(X)
-    return int(prediction[0])
+    # Load the model (load once if possible, not every call)
+    if not hasattr(predict, "model"):
+        if not os.path.exists(MODEL_PATH):
+            return "Model file not found!"
+        predict.model = joblib.load(MODEL_PATH)
+    pred = predict.model.predict(X)
+    return f"Predicted Class: {int(pred[0])}"
 
-# Build Gradio interface
+# Gradio Inputs/Outputs
 demo = gr.Interface(
-    title="Customer Churn Prediction",
-    description="Predict whether a customer will churn using a Decision Tree Classifier.",
     fn=predict,
     inputs=[
-        gr.Number(label="Monthly Fee"),
-        gr.Number(label="Customer Age"),
-        gr.Number(label="Support Calls")
+        gr.Number(label="Monthly Fee", value=0.0),
+        gr.Number(label="Customer Age", value=18),
+        gr.Number(label="Support Calls", value=0),
     ],
-    outputs=gr.Number(label="Predicted Class")
+    outputs="text",
+    title="Customer Churn Prediction",
+    description="Predict customer churn using a Decision Tree Classifier."
 )
 
 if __name__ == "__main__":

@@ -1,226 +1,462 @@
-from flask import Flask, request, jsonify
-# Cross-Origin Resource Sharing (CORS)
-# Modern browsers apply the "same-origin policy", which blocks web pages from
-# making requests to a different origin than the one that served the page.
-# This helps prevent malicious sites from reading sensitive data from another
-# site you are logged into.
-#
-# However, there are many legitimate cases where cross-origin requests are
-# needed. One example is:
-#
-## Single-Page Applications (SPA) hosted at example-frontend.com need to call
-## APIs hosted at api.example-backend.com.
-#
-# To support this safely, CORS lets servers explicitly allow such requests.
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import joblib
 import pandas as pd
+import os
+import ast
 
-app = Flask(__name__)
-# CORS(
-#     app,
-#     resources={r"/api/*": {
-#         "origins": [
-#             "https://127.0.0.1",
-#             "https://localhost"
-#         ]
-#     }},
-#     methods=["GET", "POST", "OPTIONS"],
-#     allow_headers=["Content-Type"]
-# )
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_DIR = os.getenv("MODELS_DIR", os.path.join(BASE_DIR, "model"))
 
+app = Flask(__name__, template_folder="templates")
 CORS(
-    app, supports_credentials=False,
-    resources={r"/api/*": { # This means CORS will only apply to routes that start with /api/
-               "origins": [
-                   "https://127.0.0.1", "https://localhost",
-                   "https://127.0.0.1:443", "https://localhost:443",
-                   "http://127.0.0.1", "http://localhost",
-                   "http://127.0.0.1:5000", "http://localhost:5000",
-                   "http://127.0.0.1:5500", "http://localhost:5500"
-                ]
-    }},
+    app,
+    supports_credentials=False,
+    resources={r"/api/*": {"origins": ["*"]}},
     methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type"])
+    allow_headers=["Content-Type"],
+)
 
-# CORS(app, supports_credentials=False,
-#      origins=["*"])
 
-# Load different models
-# joblib is used to load a trained model so that the API can serve ML predictions
-decisiontree_classifier_baseline = joblib.load('./model/decisiontree_classifier_baseline.pkl')
-decisiontree_regressor_optimum = joblib.load('./model/decisiontree_regressor_optimum.pkl')
-label_encoders_1b = joblib.load('./model/label_encoders_1b.pkl')
+# ============================================================
+# HELPERS
+# ============================================================
 
-# Defines an HTTP endpoint
-@app.route('/api/v1/models/decision-tree-classifier/predictions', methods=['POST'])
+def load_artifact(filename):
+    path = os.path.join(MODEL_DIR, filename)
+    try:
+        if filename == "association_rules.csv":
+            df = pd.read_csv(path)
+            df["antecedents"] = df["antecedents"].apply(
+                lambda x: frozenset(str(item).strip().lower() for item in ast.literal_eval(x))
+            )
+            df["consequents"] = df["consequents"].apply(
+                lambda x: frozenset(str(item).strip().lower() for item in ast.literal_eval(x))
+            )
+            return df
+
+        return joblib.load(path)
+    except Exception as e:
+        print(f"Failed to load {filename}: {e}")
+        return None
+
+
+def get_json_body():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def validate_required_fields(data, required_fields):
+    if data is None:
+        return ["Invalid or missing JSON body."]
+    missing = []
+    for field in required_fields:
+        value = data.get(field)
+        if value is None or value == "":
+            missing.append(field)
+    return missing
+
+
+def success_response(payload, status_code=200):
+    return jsonify({"status": "success", **payload}), status_code
+
+
+def error_response(message, status_code=400):
+    return jsonify({"status": "error", "error": message}), status_code
+
+
+# ============================================================
+# LOAD MODELS / ARTIFACTS
+# ============================================================
+
+decisiontree_classifier_baseline = load_artifact("decisiontree_classifier_baseline.pkl")
+decisiontree_regressor_optimum = load_artifact("decisiontree_regressor_optimum.pkl")
+naive_Bayes_classifier_optimum = load_artifact("naive_Bayes_classifier_optimum.pkl")
+knn_classifier_optimum = load_artifact("knn_classifier_optimum.pkl")
+support_vector_classifier_optimum = load_artifact("support_vector_classifier_optimum.pkl")
+random_forest_classifier_optimum = load_artifact("random_forest_classifier_optimum.pkl")
+
+cluster_classifier_svm = load_artifact("cluster_classifier_svm.pkl")
+association_rules = load_artifact("association_rules.csv")
+
+label_encoders_1b = load_artifact("label_encoders_1b.pkl")
+label_encoders_2 = load_artifact("label_encoders_2.pkl")
+label_encoders_4 = load_artifact("label_encoders_4.pkl")
+label_encoders_5 = load_artifact("label_encoders_5.pkl")
+
+onehot_encoder_3 = load_artifact("onehot_encoder_3.pkl")
+scaler_3 = load_artifact("scaler_3.pkl")
+scaler_4 = load_artifact("scaler_4.pkl")
+scaler_5 = load_artifact("scaler_5.pkl")
+
+
+# ============================================================
+# ROUTES
+# ============================================================
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+@app.route("/api", methods=["GET"])
+def api_root():
+    return success_response({
+        "message": "ML Model API (BBT 4206)",
+        "version": "v1",
+        "available_endpoints": {
+            "health": "/api/health [GET]",
+            "decision_tree_classifier": "/api/v1/models/decision-tree-classifier/predictions [POST]",
+            "decision_tree_regressor": "/api/v1/models/decision-tree-regressor/predictions [POST]",
+            "naive_bayes_classifier": "/api/v1/models/naive-bayes-classifier/predictions [POST]",
+            "knn_classifier": "/api/v1/models/knn-classifier/predictions [POST]",
+            "svm_classifier": "/api/v1/models/svm-classifier/predictions [POST]",
+            "random_forest_classifier": "/api/v1/models/random-forest-classifier/predictions [POST]",
+            "cluster_classifier": "/api/v1/models/cluster/predictions [POST]",
+            "product_recommender": "/api/v1/recommendations [POST]"
+        },
+        "notes": [
+            "All prediction endpoints accept JSON request bodies.",
+            "Use /api/health to verify loaded models and preprocessing artifacts."
+        ]
+    })
+
+
+@app.route("/api/health", methods=["GET"])
+def health():
+    return success_response({
+        "alive": True,
+        "models_loaded": {
+            "decisiontree_classifier_baseline": decisiontree_classifier_baseline is not None,
+            "decisiontree_regressor_optimum": decisiontree_regressor_optimum is not None,
+            "naive_Bayes_classifier_optimum": naive_Bayes_classifier_optimum is not None,
+            "knn_classifier_optimum": knn_classifier_optimum is not None,
+            "support_vector_classifier_optimum": support_vector_classifier_optimum is not None,
+            "random_forest_classifier_optimum": random_forest_classifier_optimum is not None,
+            "cluster_classifier_svm": cluster_classifier_svm is not None,
+            "association_rules": association_rules is not None
+        },
+        "preprocessing_loaded": {
+            "label_encoders_1b": label_encoders_1b is not None,
+            "label_encoders_2": label_encoders_2 is not None,
+            "label_encoders_4": label_encoders_4 is not None,
+            "label_encoders_5": label_encoders_5 is not None,
+            "onehot_encoder_3": onehot_encoder_3 is not None,
+            "scaler_3": scaler_3 is not None,
+            "scaler_4": scaler_4 is not None,
+            "scaler_5": scaler_5 is not None
+        }
+    })
+
+
+# ============================================================
+# DECISION TREE CLASSIFIER
+# ============================================================
+
+@app.route("/api/v1/models/decision-tree-classifier/predictions", methods=["POST"])
 def predict_decision_tree_classifier():
-    # Accepts JSON data sent by a client (browser, curl, Postman, etc.)
-    data = request.get_json()
-    # Create a DataFrame with the correct feature names
-    new_data = pd.DataFrame([{
-        'monthly_fee': data.get('monthly_fee'),
-        'customer_age': data.get('customer_age'),
-        'support_calls': data.get('support_calls')
-    }])
+    if decisiontree_classifier_baseline is None:
+        return error_response("Model not loaded", 503)
 
-    # Define the expected feature order (based on the order used during training)
-    expected_features = [
-        'monthly_fee',
-        'customer_age',
-        'support_calls'
-    ]
+    data = get_json_body()
+    required = ["monthly_fee", "customer_age", "support_calls"]
+    missing = validate_required_fields(data, required)
+    if missing:
+        return error_response(f"Missing features: {missing}", 400)
 
-    # Reorder and select only the expected columns
-    new_data = new_data[expected_features]
+    try:
+        X = pd.DataFrame([{
+            "monthly_fee": float(data["monthly_fee"]),
+            "customer_age": int(data["customer_age"]),
+            "support_calls": int(data["support_calls"])
+        }])
 
-    # Performs a prediction using the already trained machine learning model
-    prediction = decisiontree_classifier_baseline.predict(new_data)[0]
-    
-    # Returns the result as a JSON response:
-    return jsonify({'Predicted Class = ': int(prediction)})
+        pred = decisiontree_classifier_baseline.predict(X)[0]
 
-# *1* Sample JSON POST values
-# {
-#     "monthly_fee": 60,
-#     "customer_age": 30,
-#     "support_calls": 1
-# }
+        return success_response({
+            "model_name": "Decision Tree Classifier",
+            "prediction": int(pred)
+        })
+    except Exception as e:
+        return error_response(str(e), 500)
 
-# *2.a.* Sample cURL POST values (without HTTPS in NGINX and Gunicorn)
 
-# curl -X POST http://127.0.0.1:5000/api/v1/models/decision-tree-classifier/predictions \
-#   -H "Content-Type: application/json" \
-#   -d "{\"monthly_fee\": 60, \"customer_age\": 30, \"support_calls\": 1}"
+# ============================================================
+# DECISION TREE REGRESSOR
+# ============================================================
 
-# *2.b.* Sample cURL POST values (with HTTPS in NGINX and Gunicorn)
-
-# curl --insecure -X POST https://127.0.0.1/api/v1/models/decision-tree-classifier/predictions \
-#   -H "Content-Type: application/json" \
-#   -d "{\"monthly_fee\": 60, \"customer_age\": 30, \"support_calls\": 1}"
-
-# *3* Sample PowerShell values:
-
-# $body = @{
-#     monthly_fee = 60
-#     customer_age = 30
-#     support_calls = 1
-# } | ConvertTo-Json
-
-# Invoke-RestMethod -Uri http://127.0.0.1:5000/api/v1/models/decision-tree-classifier/predictions `
-#     -Method POST `
-#     -Body $body `
-#     -ContentType "application/json"
-
-@app.route('/api/v1/models/decision-tree-regressor/predictions', methods=['POST'])
+@app.route("/api/v1/models/decision-tree-regressor/predictions", methods=["POST"])
 def predict_decision_tree_regressor():
-    data = request.get_json()
-    # Expected input keys:
-    # 'PaymentDate', 'CustomerType', 'BranchSubCounty',
-    # 'ProductCategoryName', 'QuantityOrdered', 'PercentageProfitPerUnit'
+    if decisiontree_regressor_optimum is None or label_encoders_1b is None:
+        return error_response("Model or encoder not loaded", 503)
 
-    # Create a DataFrame based on the input
-    new_data = pd.DataFrame([data])
-
-    # Convert PaymentDate to datetime
-    new_data['PaymentDate'] = pd.to_datetime(new_data['PaymentDate'])
-
-    # Identify all datetime columns
-    datetime_columns = new_data.select_dtypes(include=['datetime64']).columns
-
-    categorical_cols = new_data.select_dtypes(exclude=['int64', 'float64', 'datetime64[ns]']).columns
-
-    # Encode categorical columns
-    for col in categorical_cols:
-        if col in new_data:
-            new_data[col] = label_encoders_1b[col].transform(new_data[col])
-
-    # Feature engineering for date
-    new_data['PaymentDate_year'] = new_data['PaymentDate'].dt.year # type: ignore
-    new_data['PaymentDate_month'] = new_data['PaymentDate'].dt.month # type: ignore
-    new_data['PaymentDate_day'] = new_data['PaymentDate'].dt.day # type: ignore
-    new_data['PaymentDate_dayofweek'] = new_data['PaymentDate'].dt.dayofweek # type: ignore
-    new_data = new_data.drop(columns=datetime_columns)
-
-    # Define the expected feature order (based on the order used during training)
-    expected_features = [
-        'CustomerType',
-        'BranchSubCounty',
-        'ProductCategoryName',
-        'QuantityOrdered',
-        'PaymentDate_year',
-        'PaymentDate_month',
-        'PaymentDate_day',
-        'PaymentDate_dayofweek'
+    data = get_json_body()
+    required = [
+        "PaymentDate", "CustomerType", "BranchSubCounty",
+        "ProductCategoryName", "QuantityOrdered"
     ]
+    missing = validate_required_fields(data, required)
+    if missing:
+        return error_response(f"Missing features: {missing}", 400)
 
-    # Reorder and select only the expected columns
-    new_data = new_data[expected_features]
+    try:
+        new_data = pd.DataFrame([data])
 
-    # Predict
-    prediction = decisiontree_regressor_optimum.predict(new_data)[0]
-    return jsonify({'Predicted Percentage Profit per Unit = ': float(prediction)})
+        for col in ["CustomerType", "BranchSubCounty", "ProductCategoryName"]:
+            if col in label_encoders_1b:
+                new_data[col] = label_encoders_1b[col].transform(new_data[col])
 
-# *1* Sample JSON POST values
-# {
-#     "CustomerType": "Business",
-#     "BranchSubCounty": "Kilimani",
-#     "ProductCategoryName": "Meat-Based Dishes",
-#     "QuantityOrdered": 8,
-#     "PaymentDate": "2027-11-13"
-# }
+        new_data["PaymentDate"] = pd.to_datetime(new_data["PaymentDate"])
+        new_data["PaymentDate_year"] = new_data["PaymentDate"].dt.year
+        new_data["PaymentDate_month"] = new_data["PaymentDate"].dt.month
+        new_data["PaymentDate_day"] = new_data["PaymentDate"].dt.day
+        new_data["PaymentDate_dayofweek"] = new_data["PaymentDate"].dt.dayofweek
+        new_data["QuantityOrdered"] = new_data["QuantityOrdered"].astype(int)
 
-# *2.a.* Sample cURL POST values
+        X = new_data[[
+            "CustomerType", "BranchSubCounty", "ProductCategoryName", "QuantityOrdered",
+            "PaymentDate_year", "PaymentDate_month", "PaymentDate_day", "PaymentDate_dayofweek"
+        ]]
 
-# curl -X POST http://127.0.0.1:5000/api/v1/models/decision-tree-regressor/predictions \
-#   -H "Content-Type: application/json" \
-#   -d "{\"CustomerType\": \"Business\",
-# 	\"BranchSubCounty\": \"Kilimani\",
-# 	\"ProductCategoryName\": \"Meat-Based Dishes\",
-# 	\"QuantityOrdered\": 8,
-# 	\"PaymentDate\": \"2027-11-13\"}"
+        pred = decisiontree_regressor_optimum.predict(X)[0]
 
-# *2.b.* Sample cURL POST values
+        return success_response({
+            "model_name": "Decision Tree Regressor",
+            "prediction": float(pred)
+        })
+    except Exception as e:
+        return error_response(str(e), 500)
 
-# curl --insecure -X POST https://127.0.0.1/api/v1/models/decision-tree-regressor/predictions \
-#   -H "Content-Type: application/json" \
-#   -d "{\"CustomerType\": \"Business\",
-# 	\"BranchSubCounty\": \"Kilimani\",
-# 	\"ProductCategoryName\": \"Meat-Based Dishes\",
-# 	\"QuantityOrdered\": 8,
-# 	\"PaymentDate\": \"2027-11-13\"}"
 
-# *3* Sample PowerShell values:
+# ============================================================
+# SHARED SESSION-BASED MODELS
+# ============================================================
 
-# $body = @{
-#     PaymentDate         = "2027-11-13"
-#     CustomerType        = "Business"
-#     BranchSubCounty     = "Kilimani"
-#     ProductCategoryName = "Meat-Based Dishes"
-#     QuantityOrdered = 8
-# } | ConvertTo-Json
+def predict_session_model(model, model_name):
+    data = get_json_body()
+    required = [
+        "Administrative", "Administrative_Duration", "Informational", "Informational_Duration",
+        "ProductRelated", "ProductRelated_Duration", "BounceRates", "ExitRates", "PageValues",
+        "SpecialDay", "Month", "OperatingSystems", "Browser", "Region", "TrafficType",
+        "VisitorType", "Weekend"
+    ]
+    missing = validate_required_fields(data, required)
+    if missing:
+        return error_response(f"Missing {model_name} features: {missing}", 400)
 
-# Invoke-RestMethod -Uri http://127.0.0.1:5000/api/v1/models/decision-tree-regressor/predictions `
-#     -Method POST `
-#     -Body $body `
-#     -ContentType "application/json"
+    try:
+        X = pd.DataFrame([{
+            "Administrative": int(data["Administrative"]),
+            "Administrative_Duration": float(data["Administrative_Duration"]),
+            "Informational": int(data["Informational"]),
+            "Informational_Duration": float(data["Informational_Duration"]),
+            "ProductRelated": int(data["ProductRelated"]),
+            "ProductRelated_Duration": float(data["ProductRelated_Duration"]),
+            "BounceRates": float(data["BounceRates"]),
+            "ExitRates": float(data["ExitRates"]),
+            "PageValues": float(data["PageValues"]),
+            "SpecialDay": float(data["SpecialDay"]),
+            "Month": int(data["Month"]),
+            "OperatingSystems": int(data["OperatingSystems"]),
+            "Browser": int(data["Browser"]),
+            "Region": int(data["Region"]),
+            "TrafficType": int(data["TrafficType"]),
+            "VisitorType": int(data["VisitorType"]),
+            "Weekend": int(data["Weekend"])
+        }])
 
-# This ensures the Flask web server only starts when you run this file directly
-# (e.g., `python api.py`), and not if you import api.py from another script or test.
+        pred = model.predict(X)[0]
 
-# __name__ is a special variable in Python. When you run a script directly,
-# __name__ is set to '__main__'. If the script is imported, __name__ is set to
-# the module's name.
+        return success_response({
+            "model_name": model_name,
+            "prediction": int(pred)
+        })
+    except Exception as e:
+        return error_response(str(e), 500)
 
-# if __name__ == '__main__': checks if the script is being run directly.
 
-# app.run(debug=True) starts the Flask development server with debugging enabled.
-# This means:
-## The server will automatically reload if you make code changes.
-## You get detailed error messages in the browser if something goes wrong.
-if __name__ == '__main__':
-    app.run(debug=True)
-# if __name__ == '__main__':
-#     app.run(debug=False)
-# if __name__ == "__main__":
-#     app.run(ssl_context=("cert.pem", "key.pem"), debug=True)
+@app.route("/api/v1/models/naive-bayes-classifier/predictions", methods=["POST"])
+def predict_naive_bayes():
+    if naive_Bayes_classifier_optimum is None:
+        return error_response("Model not loaded", 503)
+    return predict_session_model(naive_Bayes_classifier_optimum, "Naive Bayes Classifier")
+
+
+@app.route("/api/v1/models/svm-classifier/predictions", methods=["POST"])
+def predict_svm():
+    if support_vector_classifier_optimum is None:
+        return error_response("Model not loaded", 503)
+    return predict_session_model(support_vector_classifier_optimum, "SVM Classifier")
+
+
+@app.route("/api/v1/models/random-forest-classifier/predictions", methods=["POST"])
+def predict_rf():
+    if random_forest_classifier_optimum is None:
+        return error_response("Model not loaded", 503)
+    return predict_session_model(random_forest_classifier_optimum, "Random Forest Classifier")
+
+
+# ============================================================
+# KNN
+# ============================================================
+
+@app.route("/api/v1/models/knn-classifier/predictions", methods=["POST"])
+def predict_knn():
+    if knn_classifier_optimum is None:
+        return error_response("Model not loaded", 503)
+
+    if onehot_encoder_3 is None or scaler_3 is None:
+        return error_response("KNN preprocessing artifacts not loaded", 503)
+
+    data = get_json_body()
+    required = [
+        "DaysForShippingReal",
+        "DaysForShipmentScheduled",
+        "OrderItemQuantity",
+        "Sales",
+        "OrderProfitPerOrder",
+        "ShippingMode"
+    ]
+    missing = validate_required_fields(data, required)
+    if missing:
+        return error_response(f"Missing KNN features: {missing}", 400)
+
+    try:
+        shipping_mode = str(data["ShippingMode"]).strip()
+
+        new_data = pd.DataFrame([{
+            "Days for shipping (real)": float(data["DaysForShippingReal"]),
+            "Days for shipment (scheduled)": float(data["DaysForShipmentScheduled"]),
+            "Order Item Quantity": int(data["OrderItemQuantity"]),
+            "Sales": float(data["Sales"]),
+            "Order Profit Per Order": float(data["OrderProfitPerOrder"]),
+            "Shipping Mode": shipping_mode
+        }])
+
+        encoded = onehot_encoder_3.transform(new_data[["Shipping Mode"]])
+        encoded_df = pd.DataFrame(
+            encoded,
+            columns=onehot_encoder_3.get_feature_names_out(["Shipping Mode"]),
+            index=new_data.index
+        )
+
+        new_data_preprocessed = pd.concat(
+            [new_data.drop("Shipping Mode", axis=1), encoded_df],
+            axis=1
+        )
+
+        new_data_scaled = scaler_3.transform(new_data_preprocessed)
+
+        pred = knn_classifier_optimum.predict(new_data_scaled)[0]
+
+        response_payload = {
+            "model_name": "K-Nearest Neighbors Classifier",
+            "prediction": int(pred)
+        }
+
+        if hasattr(knn_classifier_optimum, "predict_proba"):
+            probabilities = knn_classifier_optimum.predict_proba(new_data_scaled)[0]
+            response_payload["probability_class_0"] = float(probabilities[0])
+            response_payload["probability_class_1"] = float(probabilities[1])
+
+        return success_response(response_payload)
+    except Exception as e:
+        return error_response(f"KNN prediction failed: {str(e)}", 500)
+
+
+# ============================================================
+# CLUSTER CLASSIFIER
+# ============================================================
+
+@app.route("/api/v1/models/cluster/predictions", methods=["POST"])
+def predict_cluster():
+    if cluster_classifier_svm is None:
+        return error_response("Cluster classifier not loaded", 503)
+
+    data = get_json_body()
+    required = ["Age", "Annual_Income", "Spending_Score", "Gender_Male"]
+    missing = validate_required_fields(data, required)
+    if missing:
+        return error_response(f"Missing Cluster features: {missing}", 400)
+
+    try:
+        artifact = cluster_classifier_svm
+        model = artifact["model"]
+        scaler = artifact["scaler"]
+        feature_columns = artifact["feature_columns"]
+
+        X = pd.DataFrame([{
+            "Age": float(data["Age"]),
+            "Annual Income (k$)": float(data["Annual_Income"]),
+            "Spending Score (1-100)": float(data["Spending_Score"]),
+            "Gender_Male": int(data["Gender_Male"])
+        }])
+
+        X = X[feature_columns]
+        X_scaled = scaler.transform(X)
+        pred = model.predict(X_scaled)[0]
+
+        return success_response({
+            "model_name": "Cluster Classifier",
+            "prediction": int(pred)
+        })
+    except Exception as e:
+        return error_response(str(e), 500)
+
+
+# ============================================================
+# RECOMMENDER
+# ============================================================
+
+@app.route("/api/v1/recommendations", methods=["POST"])
+def recommend():
+    data = get_json_body()
+    if data is None:
+        return error_response("Invalid or missing JSON body", 400)
+
+    items = data.get("items", [])
+    if not isinstance(items, list) or not items:
+        return error_response("No items provided.", 400)
+
+    items = [str(item).strip().lower() for item in items if str(item).strip()]
+    if not items:
+        return error_response("No valid items provided.", 400)
+
+    if association_rules is None:
+        return error_response("Association rules not loaded", 503)
+
+    try:
+        basket = frozenset(items)
+        recommendation_scores = {}
+
+        for _, rule in association_rules.iterrows():
+            antecedent = rule["antecedents"]
+            consequent = rule["consequents"]
+
+            if antecedent.issubset(basket):
+                for item in consequent:
+                    if item not in basket:
+                        score = float(rule["confidence"])
+                        if item in recommendation_scores:
+                            recommendation_scores[item] = max(recommendation_scores[item], score)
+                        else:
+                            recommendation_scores[item] = score
+
+        sorted_recommendations = sorted(
+            recommendation_scores.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        return success_response({
+            "input_items": items,
+            "recommended_products": [item for item, _ in sorted_recommendations[:5]]
+        })
+    except Exception as e:
+        return error_response(str(e), 500)
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=int(os.getenv("FLASK_PORT", 5000)))
