@@ -1,0 +1,12 @@
+.venv
+__pycache__
+*.pyc
+.env
+.git
+.gitignore
+.idea
+roughwork
+lab_submission_ANSWERS
+container-volumes/nginx/certs
+*.md
+

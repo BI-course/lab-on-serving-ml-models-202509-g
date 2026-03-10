@@ -8,47 +8,17 @@
 
 **Member 1:**
 
-| **Details**                                                                                                                           | **Comment** |
-|:--------------------------------------------------------------------------------------------------------------------------------------|:------------|
-| **Student ID**                                                                                                                        |             |
-| **Name**                                                                                                                              |             |
-| **What part of the lab did you personally<br/>contribute to (provide a link to the<br/>branch(es)), and what did you learn from it?** |             |
+| **Details**                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | **Comment** |
+|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------|
+| **148705**                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |             |
+| **Dedan Kimani**                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |             |
+| **I worked alone and completed all parts of the lab by myself. <br/>I trained the machine learning models, created the API endpoints, built the Gradio app for customer churn prediction, and deployed the solution on Hugging Face Spaces. <br/>My code and work are in the main branch of my GitHub Classroom repository. <br/>Through this lab, I learned how to train and serve ML models, build web interfaces for predictions, and deploy apps publicly so others can use them. ** |             |
 
-**Member 2:**
 
-| **Details**                                                                                                                           | **Comment** |
-|:--------------------------------------------------------------------------------------------------------------------------------------|:------------|
-| **Student ID**                                                                                                                        |             |
-| **Name**                                                                                                                              |             |
-| **What part of the lab did you personally<br/>contribute to (provide a link to the<br/>branch(es)), and what did you learn from it?** |             |
-
-**Member 3:**
-
-| **Details**                                                                                                                           | **Comment** |
-|:--------------------------------------------------------------------------------------------------------------------------------------|:------------|
-| **Student ID**                                                                                                                        |             |
-| **Name**                                                                                                                              |             |
-| **What part of the lab did you personally<br/>contribute to (provide a link to the<br/>branch(es)), and what did you learn from it?** |             |
-
-**Member 4:**
-
-| **Details**                                                                                                                           | **Comment** |
-|:--------------------------------------------------------------------------------------------------------------------------------------|:------------|
-| **Student ID**                                                                                                                        |             |
-| **Name**                                                                                                                              |             |
-| **What part of the lab did you personally<br/>contribute to (provide a link to the<br/>branch(es)), and what did you learn from it?** |             |
-
-**Member 5:**
-
-| **Details**                                                                                                                           | **Comment** |
-|:--------------------------------------------------------------------------------------------------------------------------------------|:------------|
-| **Student ID**                                                                                                                        |             |
-| **Name**                                                                                                                              |             |
-| **What part of the lab did you personally<br/>contribute to (provide a link to the<br/>branch(es)), and what did you learn from it?** |             |
 
 ## Chosen Level of Difficulty
 
-**Specify the chosen level of difficulty** (baseline, intermediate, or advanced):
+**Advanced** 
 
 ## Video Demonstration
 
@@ -56,11 +26,17 @@ Submit the link to a short video (not more than 5 minutes) demonstrating your so
 
 Note that you are required to submit the link to the video and NOT the video itself. The video should NOT be uploaded to your repository—that would be a misuse of GitHub.
 
-**Link to the video:**
+**https://drive.google.com/file/d/1X7u9HQClnVykBb_V_Zqev96QBGxwEOzp/view?usp=sharing:**
+### Note on Video Audio
 
+Please note that the demonstration video may not contain audio. While recording the demo on Ubuntu, the system microphone did not capture sound despite the input volume being set to maximum and the recording software indicating that audio was enabled.
+
+As a result, the demonstration focuses on visually showing the functionality of the application and the outputs of the different models.
+
+Kindly excuse the absence of audio. Thank you for your understanding.
 ## Public URL
 
-**Specify the public URL to the Gradio/Streamlit App**:
+**https://huggingface.co/spaces/D2007K/BI2_Lab**:
 
 ---
 

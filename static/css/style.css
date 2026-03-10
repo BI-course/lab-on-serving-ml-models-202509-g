@@ -1,0 +1,138 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+header {
+    text-align: center;
+    padding: 30px 0;
+}
+
+header h1 {
+    color: #2c3e50;
+    font-size: 2rem;
+    margin-bottom: 6px;
+}
+
+header p {
+    color: #7f8c8d;
+    font-size: 1.05rem;
+}
+
+.card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card h2 {
+    color: #2c3e50;
+    margin-bottom: 16px;
+    font-size: 1.25rem;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #555;
+}
+
+select,
+input[type="text"],
+input[type="number"],
+input[type="date"],
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.3s ease;
+    background-color: #fff;
+}
+
+select:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+textarea:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+button {
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.hidden {
+    display: none;
+}
+
+.result {
+    margin-top: 15px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 13px;
+    min-height: 40px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+}
+
+.result.visible {
+    display: block;
+}
+
+.result.error {
+    border-color: #e74c3c;
+    background-color: #fdf0ef;
+    color: #c0392b;
+}
+
+.result.success {
+    border-color: #27ae60;
+    background-color: #eafaf1;
+    color: #1e8449;
+}
